@@ -43,8 +43,8 @@
   <input type="hidden" name="id" value="<%=id %>" />
   <div><h4>Update album: </h4></div>
   Name: <input type="text" name="name" value="<%= album.getName() %>" />
-  Year: <input type="text" name="country" value="<%= album.getYear() %>" />
-  Artist: <select name="genre_id">
+  Year: <input type="text" name="year" value="<%= album.getYear() %>" />
+  Artist: <select name="artist_id">
   <% List<Artist> artists = facade.getArtistDao().loadAll();
     for (Artist artist : artists) { %>
   <option value="<%= artist.getId() %>">

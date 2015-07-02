@@ -23,6 +23,7 @@ public class AudiosServlet extends HttpServlet {
     private static final String PARAMETER_ARTIST_ID = "artist_id";
     private static final String PARAMETER_ALBUM_ID = "album_id";
 
+    private static final String GET_METHOD = "get";
     private static final String CREATE_METHOD = "create";
     private static final String UPDATE_METHOD = "update";
     private static final String DELETE_METHOD = "delete";
@@ -32,10 +33,23 @@ public class AudiosServlet extends HttpServlet {
         response.setContentType("application/json;charset=UTF-8");
         DaoFacade facade = new DaoFacade(request.getServletContext());
         String name = request.getParameter(PARAMETER_NAME);
-        int duration = Integer.parseInt(request.getParameter(PARAMETER_DURATION));
-        int price = Integer.parseInt(request.getParameter(PARAMETER_PRICE));
-        long artistId = Long.parseLong(request.getParameter(PARAMETER_ARTIST_ID));
-        long albumId = Long.parseLong(request.getParameter(PARAMETER_ALBUM_ID));
+        int duration;
+        int price;
+        long artistId;
+        long albumId;
+        try {
+            duration = Integer.parseInt(request.getParameter(PARAMETER_DURATION));
+            price = Integer.parseInt(request.getParameter(PARAMETER_PRICE));
+            artistId = Long.parseLong(request.getParameter(PARAMETER_ARTIST_ID));
+            albumId = Long.parseLong(request.getParameter(PARAMETER_ALBUM_ID));
+        } catch (NumberFormatException e){
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            try (PrintWriter out = response.getWriter()) {
+                out.print("{\"error\":\"Invalid input data\"}");
+                return;
+            }
+        }
+
 
         if (requestMethod.equalsIgnoreCase(CREATE_METHOD)){
             Audio audio = new Audio(name,duration,price,artistId,albumId);
@@ -77,7 +91,20 @@ public class AudiosServlet extends HttpServlet {
         response.setContentType("application/json;charset=UTF-8");
         DaoFacade facade = new DaoFacade(request.getServletContext());
 
-        if (requestMethod.equalsIgnoreCase(DELETE_METHOD)){
+        if (GET_METHOD.equalsIgnoreCase(requestMethod)) {
+            List<Audio> audios;
+            if (request.getParameter(PARAMETER_ALBUM_ID)!=null){
+                long genreId = Long.parseLong(request.getParameter(PARAMETER_ALBUM_ID));
+                audios = facade.getAudioDao().loadAllbyValue(genreId);
+            } else {
+                audios = facade.getAudioDao().loadAll();
+            }
+            try (PrintWriter out = response.getWriter()) {
+                Gson gson = new Gson();
+                gson.toJson(audios, out);
+            }
+            response.setStatus(HttpServletResponse.SC_OK);
+        } else if (requestMethod.equalsIgnoreCase(DELETE_METHOD)){
             long id = Long.parseLong(request.getParameter(PARAMETER_ID));
             boolean wasDeleted = facade.getAudioDao().delete(id);
             try (PrintWriter pw = response.getWriter()){

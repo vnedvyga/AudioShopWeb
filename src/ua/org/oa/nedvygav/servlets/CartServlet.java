@@ -1,5 +1,7 @@
 package ua.org.oa.nedvygav.servlets;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import ua.org.oa.nedvygav.dao.DaoFacade;
 import ua.org.oa.nedvygav.data.Audio;
 import ua.org.oa.nedvygav.data.Order;
@@ -9,8 +11,10 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.lang.reflect.Type;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,6 +25,8 @@ public class CartServlet extends HttpServlet {
 
     private static final String PARAMETER_ITEM_ID = "id";
 
+    private static final String PARAMETER_BUY_FROM_APP = "buy_from_app";
+
     private static final String ADD_TO_CART_METHOD = "add";
     private static final String ADD_ALBUM_TO_CART_METHOD = "add_album";
     private static final String REMOVE_FROM_CART_METHOD = "remove";
@@ -28,7 +34,37 @@ public class CartServlet extends HttpServlet {
     private static final String BUY_METHOD = "buy";
 
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        HttpSession session = request.getSession();
 
+        List<Audio> cart = (List<Audio>) session.getAttribute("cart");
+        DaoFacade facade = new DaoFacade(request.getServletContext());
+
+
+        if (request.getParameter(PARAMETER_METOD).equals(BUY_METHOD)) {
+            if (request.getParameter(PARAMETER_BUY_FROM_APP)!=null){
+                Gson gson = new Gson();
+                Type collectionType = new TypeToken<List<Audio>>(){
+                }.getType();
+                System.out.println(request.getParameter(PARAMETER_BUY_FROM_APP));
+                cart = gson.fromJson(request.getParameter(PARAMETER_BUY_FROM_APP), collectionType);
+            }
+            int totalPrice=0;
+            for (Audio items : cart){
+                totalPrice+=items.getPrice();
+            }
+            Order order = new Order(LocalDateTime.now(), cart, totalPrice);
+            boolean wasBought = facade.getOrderDao().add(order);
+            try (PrintWriter pw = response.getWriter()) {
+                if (wasBought) {
+                    response.setStatus(HttpServletResponse.SC_OK);
+                    pw.print("{\"response\":\"Items was bought\"}");
+                    session.invalidate();
+                } else {
+                    response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                    pw.print("{\"error\":\"Failed to buy items\"}");
+                }
+            }
+        }
     }
 
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -99,23 +135,6 @@ public class CartServlet extends HttpServlet {
                 } else {
                     response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                     pw.print("{\"error\":\"Failed to clear this cart\"}");
-                }
-            }
-        } else if (request.getParameter(PARAMETER_METOD).equals(BUY_METHOD)) {
-            int totalPrice=0;
-            for (Audio items : cart){
-                totalPrice+=items.getPrice();
-            }
-            Order order = new Order(LocalDateTime.now(), cart, totalPrice);
-            boolean wasBought = facade.getOrderDao().add(order);
-            try (PrintWriter pw = response.getWriter()) {
-                if (wasBought) {
-                    response.setStatus(HttpServletResponse.SC_OK);
-                    pw.print("{\"response\":\"Items was bought\"}");
-                    session.invalidate();
-                } else {
-                    response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                    pw.print("{\"error\":\"Failed to buy items\"}");
                 }
             }
         }

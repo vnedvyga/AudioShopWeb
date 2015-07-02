@@ -96,6 +96,7 @@ public class AlbumDao implements AbstractDao<Album>{
         try {
             statement.executeUpdate("UPDATE " + TABLE_NAME + " SET " +
                     COLUMN_NAME + "='" + changed.getName() + "', " + COLUMN_YEAR + "='" + changed.getYear() +
+                    "', "+ COLUMN_ARTIST_ID + "='" + changed.getArtistId() +
                     "' WHERE " + COLUMN_ID + "=" + changed.getId() + ";");
         } catch (SQLException e) {
             e.printStackTrace();

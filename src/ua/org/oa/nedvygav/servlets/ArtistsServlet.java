@@ -1,5 +1,6 @@
 package ua.org.oa.nedvygav.servlets;
 
+import com.google.gson.Gson;
 import ua.org.oa.nedvygav.dao.DaoFacade;
 import ua.org.oa.nedvygav.data.Artist;
 
@@ -10,6 +11,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.List;
 
 
 public class ArtistsServlet extends HttpServlet {
@@ -19,6 +21,7 @@ public class ArtistsServlet extends HttpServlet {
     private static final String PARAMETER_COUNTRY = "country";
     private static final String PARAMETER_GENRE_ID = "genre_id";
 
+    private static final String GET_ALL_METHOD = "get";
     private static final String CREATE_METHOD = "create";
     private static final String UPDATE_METHOD = "update";
     private static final String DELETE_METHOD = "delete";
@@ -71,7 +74,20 @@ public class ArtistsServlet extends HttpServlet {
         response.setContentType("application/json;charset=UTF-8");
         DaoFacade facade = new DaoFacade(request.getServletContext());
 
-        if (requestMethod.equalsIgnoreCase(DELETE_METHOD)){
+        if (GET_ALL_METHOD.equalsIgnoreCase(requestMethod)) {
+            List<Artist> artists;
+            if (request.getParameter(PARAMETER_GENRE_ID)!=null){
+                long genreId = Long.parseLong(request.getParameter(PARAMETER_GENRE_ID));
+                artists = facade.getArtistDao().loadAllbyValue(genreId);
+            } else {
+                artists = facade.getArtistDao().loadAll();
+            }
+            try (PrintWriter out = response.getWriter()) {
+                Gson gson = new Gson();
+                gson.toJson(artists, out);
+            }
+            response.setStatus(HttpServletResponse.SC_OK);
+        } else if (requestMethod.equalsIgnoreCase(DELETE_METHOD)){
             long id = Long.parseLong(request.getParameter(PARAMETER_ID));
             boolean wasDeleted = facade.getArtistDao().delete(id);
             try (PrintWriter pw = response.getWriter()){

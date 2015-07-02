@@ -31,8 +31,13 @@
   </tr>
   <% } %>
   </table>
-  <button onclick="location.href='cart?method=buy'">Buy</button>
+<div>
+<form style="display: inline-block;" action="cart" method="POST">
+  <input type="hidden" name="method" value="buy">
+  <input type="submit" value="Buy">
+</form>
   <button onclick="location.href='cart?method=clear'">Clear cart</button>
+</div>
   <% } else {%> No Items to Show <% } %>
 
 </body>

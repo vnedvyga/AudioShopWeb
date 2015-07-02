@@ -20,6 +20,7 @@ public class AlbumsServlet extends HttpServlet {
     private static final String PARAMETER_YEAR = "year";
     private static final String PARAMETER_ARTIST_ID = "artist_id";
 
+    private static final String GET_METHOD = "get";
     private static final String CREATE_METHOD = "create";
     private static final String UPDATE_METHOD = "update";
     private static final String DELETE_METHOD = "delete";
@@ -29,7 +30,13 @@ public class AlbumsServlet extends HttpServlet {
         response.setContentType("application/json;charset=UTF-8");
         DaoFacade facade = new DaoFacade(request.getServletContext());
         String name = request.getParameter(PARAMETER_NAME);
-        int year = Integer.parseInt(request.getParameter(PARAMETER_YEAR));
+        int year;
+        try{
+            year = Integer.parseInt(request.getParameter(PARAMETER_YEAR));
+        } catch (NumberFormatException e){
+            year=0;
+        }
+
         long artistId = Long.parseLong(request.getParameter(PARAMETER_ARTIST_ID));
 
         if (requestMethod.equalsIgnoreCase(CREATE_METHOD)){
@@ -72,7 +79,21 @@ public class AlbumsServlet extends HttpServlet {
         response.setContentType("application/json;charset=UTF-8");
         DaoFacade facade = new DaoFacade(request.getServletContext());
 
-        if (requestMethod.equalsIgnoreCase(DELETE_METHOD)){
+        if (GET_METHOD.equalsIgnoreCase(requestMethod)) {
+            List<Album> albums;
+            String artistIdString = request.getParameter(PARAMETER_ARTIST_ID);
+            if (artistIdString!=null){
+                long artistId = Long.parseLong(request.getParameter(PARAMETER_ARTIST_ID));
+                albums = facade.getAlbumDao().loadAllbyValue(artistId);
+            } else {
+                albums = facade.getAlbumDao().loadAll();
+            }
+            try (PrintWriter out = response.getWriter()) {
+                Gson gson = new Gson();
+                gson.toJson(albums, out);
+            }
+            response.setStatus(HttpServletResponse.SC_OK);
+        } else if (requestMethod.equalsIgnoreCase(DELETE_METHOD)){
             long id = Long.parseLong(request.getParameter(PARAMETER_ID));
             boolean wasDeleted = facade.getAlbumDao().delete(id);
             try (PrintWriter pw = response.getWriter()){
@@ -84,16 +105,7 @@ public class AlbumsServlet extends HttpServlet {
                     pw.print("{\"error\":\"Failed to delete artist\"}");
                 }
             }
-        } else if(requestMethod.equals("getAlbums")){
-            long artistId = Long.parseLong(request.getParameter(PARAMETER_ARTIST_ID));
-            List<Album> albums = facade.getAlbumDao().loadAllbyValue(artistId);
-            String json = new Gson().toJson(albums);
-            response.setContentType("application/json");
-            response.getWriter().write(json);
-
-
         }
-
         facade.closeSqlConnection();
     }
 }

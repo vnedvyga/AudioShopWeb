@@ -20,7 +20,7 @@
 
       $('#artist_id').change(function(event) {
         var artistId = $("select#artist_id").val();
-        $.getJSON('albums', { method : "getAlbums",
+        $.getJSON('albums', { method : "get",
           artist_id : artistId
         }, function(response) {
           var select = $('#album_id');

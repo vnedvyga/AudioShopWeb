@@ -2,6 +2,7 @@ package ua.org.oa.nedvygav.servlets;
 
 
 
+import com.google.gson.Gson;
 import ua.org.oa.nedvygav.dao.DaoFacade;
 import ua.org.oa.nedvygav.data.Genre;
 
@@ -12,7 +13,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
-
+import java.util.List;
 
 
 public class GenresServlet extends HttpServlet {
@@ -20,6 +21,7 @@ public class GenresServlet extends HttpServlet {
     private static final String PARAMETER_ID = "id";
     private static final String PARAMETER_NAME = "name";
 
+    private static final String GET_ALL_METHOD = "get";
     private static final String CREATE_METHOD = "create";
     private static final String UPDATE_METHOD = "update";
     private static final String DELETE_METHOD = "delete";
@@ -71,7 +73,14 @@ public class GenresServlet extends HttpServlet {
         response.setContentType("application/json;charset=UTF-8");
         DaoFacade facade = new DaoFacade(request.getServletContext());
 
-        if (requestMethod.equalsIgnoreCase(DELETE_METHOD)){
+        if (GET_ALL_METHOD.equalsIgnoreCase(requestMethod)) {
+            List<Genre> genres = facade.getGenreDao().loadAll();
+            try (PrintWriter out = response.getWriter()) {
+                Gson gson = new Gson();
+                gson.toJson(genres, out);
+            }
+            response.setStatus(HttpServletResponse.SC_OK);
+        } else if (requestMethod.equalsIgnoreCase(DELETE_METHOD)){
             long id = Long.parseLong(request.getParameter(PARAMETER_ID));
             boolean wasDeleted = facade.getGenreDao().delete(id);
             try (PrintWriter pw = response.getWriter()){

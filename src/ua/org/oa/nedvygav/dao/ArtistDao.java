@@ -98,6 +98,7 @@ public class ArtistDao implements AbstractDao<Artist>{
         try {
             statement.executeUpdate("UPDATE " + TABLE_NAME + " SET " +
                     COLUMN_NAME + "='" + changed.getName() + "', " + COLUMN_COUNTRY + "='" + changed.getOriginCountry() +
+                   "', " +COLUMN_GENRE_ID + "='" + changed.getGenreId() +
                     "' WHERE " + COLUMN_ID + "=" + changed.getId() + ";");
         } catch (SQLException e) {
             e.printStackTrace();
